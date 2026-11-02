@@ -2775,15 +2775,28 @@ END:VCALENDAR`;
             else events = parseICS(RAW_ICS_DATA);
             
             if (events.length > 0 && !APP_DATA) currentDate = new Date(events[0].start);
-            try { currentView = localStorage.getItem('appleCalView') || SAVED_VIEW; } catch (e) {}
+            
+            // Imposta di default la modalità agenda da cellulare
+            try { 
+                let saved = localStorage.getItem('appleCalView');
+                if (saved) {
+                    currentView = saved;
+                } else {
+                    currentView = window.innerWidth < 768 ? 'agenda' : (SAVED_VIEW || 'grid');
+                }
+            } catch (e) {
+                currentView = window.innerWidth < 768 ? 'agenda' : 'grid';
+            }
 
             buildFilterState();
             renderFilters();
             updateViewButtons();
             renderColorPicker();
-            renderCalendar();
             fixInputsForTheme();
             handleTypeChange();
+            
+            // Carica la pagina centrando sulla giornata di oggi
+            goToToday();
         }
 
         // --- THEME ---
@@ -3010,9 +3023,21 @@ END:VCALENDAR`;
             else { b.classList.add('opacity-0'); p.classList.add('translate-x-full'); setTimeout(() => b.classList.add('hidden'), 300); }
         }
 
-        // --- CALENDARIO (TABELLA GRID) ---
+        // --- CALENDARIO (TABELLA GRID E AGENDA) ---
         function changeMonth(off) { currentDate.setMonth(currentDate.getMonth() + off); renderCalendar(); }
-        function goToToday() { currentDate = new Date(); renderCalendar(); }
+        function goToToday() { 
+            currentDate = new Date(); 
+            renderCalendar(); 
+            // Scorre alla data di oggi se si è in modalità agenda
+            if(currentView === 'agenda') {
+                setTimeout(() => {
+                    const todayRow = document.getElementById('agenda-today');
+                    if(todayRow) {
+                        todayRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 50);
+            }
+        }
 
         function renderCalendar() {
             const y = currentDate.getFullYear(), m = currentDate.getMonth();
@@ -3100,53 +3125,62 @@ END:VCALENDAR`;
                     return filterState.categories[e.mainCategory] && filterState.partitions[e.partition||'Altro / Unico'] && filterState.types[e.type || 'lezione'];
                 }).sort((a,b)=>a.start-b.start);
 
-                if(!evs.length) continue;
+                const isToday = cellD.toDateString() === today.toDateString();
+                // Mostra la riga se ci sono eventi OPPURE se è la giornata di oggi
+                if(!evs.length && !isToday) continue;
                 hasEv = true;
 
                 const row = document.createElement('div');
                 row.className = 'flex flex-col md:flex-row py-5 mt-4 border-b border-black/15 dark:border-[#222] last:border-0';
+                if(isToday) row.id = 'agenda-today'; // Aggiunto ID per lo scorrimento
                 
                 const colD = document.createElement('div');
                 colD.className = 'w-full md:w-28 flex md:flex-col items-center md:items-start gap-3 mb-4 md:mb-0';
-                const isToday = cellD.toDateString() === today.toDateString();
                 const dName = cellD.toLocaleDateString('it-IT', {weekday:'short'});
                 
                 if(isToday) colD.innerHTML = `<span class="text-sm font-bold text-red-500 uppercase tracking-widest">${dName}</span><span class="w-10 h-10 flex items-center justify-center bg-red-500 text-white rounded-full font-bold text-xl shadow-md">${d}</span>`;
                 else colD.innerHTML = `<span class="text-sm font-bold text-gray-500 uppercase tracking-widest">${dName}</span><span class="text-3xl font-bold">${d}</span>`;
                 
-                const colE = document.createElement('div');
+const colE = document.createElement('div');
                 colE.className = 'flex-1 space-y-3';
 
-                evs.forEach(e => {
+                if (evs.length === 0 && isToday) {
                     const el = document.createElement('div');
-                    const c = getEvColor(e);
-                    const isDark = currentTheme === 'dark';
-                    
-                    // Tinta unita satinata, niente bordi
-                    el.className = 'satin-event flex flex-col md:flex-row p-4 rounded-[24px] cursor-pointer hover:scale-[1.01] transition-transform items-start md:items-center gap-2 shadow-sm';
-                    el.style.backgroundColor = isDark ? `rgba(${c.rgb}, 0.25)` : `rgba(${c.rgb}, 0.18)`;
-                    el.style.color = isDark ? c.textDark : c.textLight;
-                    
-                    const time = e.start.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
-                    
-                    let badge = '';
-                    if (e.type === 'esame') badge = `<span class="bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-1 inline-block shadow-sm">Esame</span>`;
-                    else if (e.type === 'personale') badge = `<span class="bg-purple-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-1 inline-block shadow-sm">Personale</span>`;
-
-                    el.innerHTML = `
-                        <div class="font-bold text-base opacity-80 min-w-[55px]">${time}</div>
-                        <div class="flex-1">
-                            ${badge}
-                            <div class="font-bold text-lg leading-tight">${e.title}</div>
-                            <div class="text-sm font-semibold opacity-75 mt-1.5 flex flex-wrap gap-2">
-                                ${e.partition ? `<span class="bg-black/10 dark:bg-[#1a1a1a] px-3 py-1 rounded-full">${e.partition}</span>` : ''}
-                                ${e.location ? `<span><i class="fas fa-map-marker-alt mr-1"></i>${e.location}</span>` : ''}
-                            </div>
-                        </div>
-                    `;
-                    el.onclick = () => openModal(e);
+                    el.className = 'satin-event flex items-center justify-center p-4 rounded-[24px] text-gray-500 dark:text-gray-400 italic shadow-sm bg-black/5 dark:bg-white/5';
+                    el.innerHTML = 'Nessun evento in programma per oggi';
                     colE.appendChild(el);
-                });
+                } else {
+                    evs.forEach(e => {
+                        const el = document.createElement('div');
+                        const c = getEvColor(e);
+                        const isDark = currentTheme === 'dark';
+                        
+                        // Tinta unita satinata, niente bordi
+                        el.className = 'satin-event flex flex-col md:flex-row p-4 rounded-[24px] cursor-pointer hover:scale-[1.01] transition-transform items-start md:items-center gap-2 shadow-sm';
+                        el.style.backgroundColor = isDark ? `rgba(${c.rgb}, 0.25)` : `rgba(${c.rgb}, 0.18)`;
+                        el.style.color = isDark ? c.textDark : c.textLight;
+                        
+                        const time = e.start.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
+                        
+                        let badge = '';
+                        if (e.type === 'esame') badge = `<span class="bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-1 inline-block shadow-sm">Esame</span>`;
+                        else if (e.type === 'personale') badge = `<span class="bg-purple-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-1 inline-block shadow-sm">Personale</span>`;
+
+                        el.innerHTML = `
+                            <div class="font-bold text-base opacity-80 min-w-[55px]">${time}</div>
+                            <div class="flex-1">
+                                ${badge}
+                                <div class="font-bold text-lg leading-tight">${e.title}</div>
+                                <div class="text-sm font-semibold opacity-75 mt-1.5 flex flex-wrap gap-2">
+                                    ${e.partition ? `<span class="bg-black/10 dark:bg-[#1a1a1a] px-3 py-1 rounded-full">${e.partition}</span>` : ''}
+                                    ${e.location ? `<span><i class="fas fa-map-marker-alt mr-1"></i>${e.location}</span>` : ''}
+                                </div>
+                            </div>
+                        `;
+                        el.onclick = () => openModal(e);
+                        colE.appendChild(el);
+                    });
+                }
                 row.appendChild(colD); row.appendChild(colE); cont.appendChild(row);
             }
             if(!hasEv) cont.innerHTML = `<div class="text-center py-20 text-gray-400"><i class="fas fa-calendar-check text-5xl mb-4 opacity-30"></i><p class="font-semibold text-lg">Nessun evento visibile</p></div>`;
