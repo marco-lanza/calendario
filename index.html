@@ -2776,17 +2776,9 @@ END:VCALENDAR`;
             
             if (events.length > 0 && !APP_DATA) currentDate = new Date(events[0].start);
             
-            // Imposta di default la modalità agenda da cellulare
-            try { 
-                let saved = localStorage.getItem('appleCalView');
-                if (saved) {
-                    currentView = saved;
-                } else {
-                    currentView = window.innerWidth < 768 ? 'agenda' : (SAVED_VIEW || 'grid');
-                }
-            } catch (e) {
-                currentView = window.innerWidth < 768 ? 'agenda' : 'grid';
-            }
+            // Rileva se è uno smartphone (tramite larghezza schermo o sensore touch/UserAgent)
+            const isMobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            currentView = isMobile ? 'agenda' : 'grid';
 
             buildFilterState();
             renderFilters();
@@ -2888,8 +2880,15 @@ END:VCALENDAR`;
         }
 
         function setView(v) { 
-            currentView = v; try{ localStorage.setItem('appleCalView', v); } catch(e){} 
-            updateViewButtons(); renderCalendar(); 
+            currentView = v; 
+            updateViewButtons(); 
+            renderCalendar(); 
+            if(v === 'agenda') {
+                setTimeout(() => {
+                    const todayRow = document.getElementById('agenda-today');
+                    if(todayRow) todayRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 50);
+            }
         }
 
         function updateViewButtons() {
