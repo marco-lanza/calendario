@@ -3174,8 +3174,8 @@ END:VCALENDAR`;
                 hasEv = true;
 
                 const row = document.createElement('div');
-                // scroll-mt-8 lascia un margine perfetto in alto per evitare tagli
-                row.className = 'flex flex-col md:flex-row py-5 mt-4 border-b border-black/15 dark:border-[#222] last:border-0 scroll-mt-8';
+                // scroll-mt-1 lascia un margine perfetto in alto per evitare tagli
+                row.className = 'flex flex-col md:flex-row py-5 mt-4 border-b border-black/15 dark:border-[#222] last:border-0 scroll-mt-1';
                 if(isToday) row.id = 'agenda-today';
                 
                 const colD = document.createElement('div');
