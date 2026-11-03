@@ -2927,13 +2927,12 @@ END:VCALENDAR`;
         }
 
         function setView(v) { 
-            currentView = v; 
-            updateViewButtons(); 
-            renderCalendar(); 
+            currentView = v; try{ localStorage.setItem('appleCalView', v); } catch(e){} 
+            updateViewButtons(); renderCalendar(); 
             if(v === 'agenda') {
                 setTimeout(() => {
                     const todayRow = document.getElementById('agenda-today');
-                    if(todayRow) todayRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    if(todayRow) todayRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 50);
             }
         }
@@ -3071,16 +3070,14 @@ END:VCALENDAR`;
 
         // --- CALENDARIO (TABELLA GRID E AGENDA) ---
         function changeMonth(off) { currentDate.setMonth(currentDate.getMonth() + off); renderCalendar(); }
-        function goToToday() { 
+        
+		function goToToday() { 
             currentDate = new Date(); 
             renderCalendar(); 
-            // Scorre alla data di oggi se si è in modalità agenda
             if(currentView === 'agenda') {
                 setTimeout(() => {
                     const todayRow = document.getElementById('agenda-today');
-                    if(todayRow) {
-                        todayRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
+                    if(todayRow) todayRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 50);
             }
         }
@@ -3177,8 +3174,9 @@ END:VCALENDAR`;
                 hasEv = true;
 
                 const row = document.createElement('div');
-                row.className = 'flex flex-col md:flex-row py-5 mt-4 border-b border-black/15 dark:border-[#222] last:border-0';
-                if(isToday) row.id = 'agenda-today'; // Aggiunto ID per lo scorrimento
+                // scroll-mt-8 lascia un margine perfetto in alto per evitare tagli
+                row.className = 'flex flex-col md:flex-row py-5 mt-4 border-b border-black/15 dark:border-[#222] last:border-0 scroll-mt-8';
+                if(isToday) row.id = 'agenda-today';
                 
                 const colD = document.createElement('div');
                 colD.className = 'w-full md:w-28 flex md:flex-col items-center md:items-start gap-3 mb-4 md:mb-0';
