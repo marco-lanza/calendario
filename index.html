@@ -1,8 +1,24 @@
 <!DOCTYPE html>
-<html lang="it" class="light"><head>
+<html lang="it" class="light">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Calendario UniPV</title>
+	
+	<!-- Configurazione Web App (PWA) Fullscreen per Android e iOS -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Calendario">
+    <meta name="theme-color" id="meta-theme-color" content="#000000">
+
+    <!-- Icona App Stile Apple Calendar (SVG inline per Home Screen e Favicon) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='115' fill='%23121212'/%3E%3Cpath d='M0 115C0 51.487 51.487 0 115 0h282c63.513 0 115 51.487 115 115v55H0v-55z' fill='%23ff3b30'/%3E%3Ctext x='256' y='118' font-family='-apple-system, BlinkMacSystemFont, sans-serif' font-size='68' font-weight='800' fill='%23ffffff' text-anchor='middle' letter-spacing='6'%3EMEDICINA%3C/text%3E%3Ctext x='256' y='395' font-family='-apple-system, BlinkMacSystemFont, sans-serif' font-size='230' font-weight='700' fill='%23ffffff' text-anchor='middle'%3E4%C2%B0%3C/text%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='115' fill='%23121212'/%3E%3Cpath d='M0 115C0 51.487 51.487 0 115 0h282c63.513 0 115 51.487 115 115v55H0v-55z' fill='%23ff3b30'/%3E%3Ctext x='256' y='118' font-family='-apple-system, BlinkMacSystemFont, sans-serif' font-size='68' font-weight='800' fill='%23ffffff' text-anchor='middle' letter-spacing='6'%3EMEDICINA%3C/text%3E%3Ctext x='256' y='395' font-family='-apple-system, BlinkMacSystemFont, sans-serif' font-size='230' font-weight='700' fill='%23ffffff' text-anchor='middle'%3E4%C2%B0%3C/text%3E%3C/svg%3E">
+
+    <!-- Web App Manifest Inline (Modalità Standalone senza barra URL) -->
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Calendario Medicina","short_name":"Calendario","start_url":"./","display":"standalone","background_color":"#000000","theme_color":"#000000","orientation":"any","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 512 512%27%3E%3Crect width=%27512%27 height=%27512%27 rx=%27115%27 fill=%27%23121212%27/%3E%3Cpath d=%27M0 115C0 51.487 51.487 0 115 0h282c63.513 0 115 51.487 115 115v55H0v-55z%27 fill=%27%23ff3b30%27/%3E%3Ctext x=%27256%27 y=%27118%27 font-family=%27sans-serif%27 font-size=%2768%27 font-weight=%27800%27 fill=%27%23ffffff%27 text-anchor=%27middle%27%3EMEDICINA%3C/text%3E%3Ctext x=%27256%27 y=%27395%27 font-family=%27sans-serif%27 font-size=%27230%27 font-weight=%27700%27 fill=%27%23ffffff%27 text-anchor=%27middle%27%3E4%C2%B0%3C/text%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}]}'>
+	
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -2799,16 +2815,20 @@ END:VCALENDAR`;
             currentTheme = theme;
             try { localStorage.setItem('appleTheme', theme); } catch(e){}
             const html = document.documentElement, icon = document.getElementById('theme-icon');
+            const metaTheme = document.getElementById('meta-theme-color');
             if(theme === 'dark') {
                 html.classList.add('dark'); html.classList.remove('light');
                 icon.className = 'fas fa-sun text-white'; // Sole bianco
+                if(metaTheme) metaTheme.setAttribute('content', '#000000');
             } else {
                 html.classList.remove('dark'); html.classList.add('light');
                 icon.className = 'fas fa-moon text-gray-800';
+                if(metaTheme) metaTheme.setAttribute('content', '#f5f5f7');
             }
             renderColorPicker(); 
             fixInputsForTheme();
         }
+		
         function toggleTheme() { applyTheme(currentTheme === 'light' ? 'dark' : 'light'); renderCalendar(); }
         
         function fixInputsForTheme() {
