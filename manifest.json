@@ -1,0 +1,13 @@
+{
+  "name": "Calendario",
+  "short_name": "Calendario",
+  "start_url": "/calendario/",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "icona.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
